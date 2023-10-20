@@ -42,20 +42,20 @@ static void handler(int sig) {
 }
 
 static void usage() {
-    printf("Usage: wrk <options> <url>                            \n"
-           "  Options:                                            \n"
-           "    -c, --connections <N>  Connections to keep open   \n"
-           "    -d, --duration    <T>  Duration of test           \n"
-           "    -t, --threads     <N>  Number of threads to use   \n"
+    printf("Usage: wrk <options> <url>                                  \n"
+           "  Options:                                                 \n"
+           "    -c, --connections <N>  跟服务器建立并保持的TCP连接数量   \n"
+           "    -d, --duration    <T>  压测时间                         \n"
+           "    -t, --threads     <N>  使用多少个线程进行压测            \n"
+           "                                                           \n"
+           "    -s, --script      <S>  指定Lua脚本路径                  \n"
+           "    -H, --header      <H>  为每一个HTTP请求添加HTTP头        \n"
+           "        --latency          在压测结束后，打印延迟统计信息     \n"
+           "        --timeout     <T>  超时时间                         \n"
+           "    -v, --version          打印正在使用的wrk的详细版本信息    \n"
            "                                                      \n"
-           "    -s, --script      <S>  Load Lua script file       \n"
-           "    -H, --header      <H>  Add header to request      \n"
-           "        --latency          Print latency statistics   \n"
-           "        --timeout     <T>  Socket/request timeout     \n"
-           "    -v, --version          Print version details      \n"
-           "                                                      \n"
-           "  Numeric arguments may include a SI unit (1k, 1M, 1G)\n"
-           "  Time arguments may include a time unit (2s, 2m, 2h)\n");
+           "  代表数字参数，支持国际单位 (1k, 1M, 1G)\n"
+           "  代表时间参数，支持时间单位 (2s, 2m, 2h)\n");
 }
 
 int main(int argc, char **argv) {
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 
     char *time = format_time_s(cfg.duration);
     printf("Running %s test @ %s\n", time, url);
-    printf("  %"PRIu64" threads and %"PRIu64" connections\n", cfg.threads, cfg.connections);
+    printf("  %"PRIu64" 线程 和 %"PRIu64" 连接\n", cfg.threads, cfg.connections);
 
     uint64_t start    = time_us();
     uint64_t complete = 0;
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
     }
 
     print_stats_header();
-    print_stats("Latency", statistics.latency, format_time_us);
+    print_stats("延迟", statistics.latency, format_time_us);
     print_stats("Req/Sec", statistics.requests, format_metric);
     if (cfg.latency) print_stats_latency(statistics.latency);
 
@@ -187,8 +187,8 @@ int main(int argc, char **argv) {
         printf("  Non-2xx or 3xx responses: %d\n", errors.status);
     }
 
-    printf("Requests/sec: %9.2Lf\n", req_per_s);
-    printf("Transfer/sec: %10sB\n", format_binary(bytes_per_s));
+    printf("请求/sec: %9.2Lf\n", req_per_s);
+    printf("传输/sec: %10sB\n", format_binary(bytes_per_s));
 
     if (script_has_done(L)) {
         script_summary(L, runtime_us, complete, bytes);
@@ -544,7 +544,7 @@ static int parse_args(struct config *cfg, char **url, struct http_parser_url *pa
 }
 
 static void print_stats_header() {
-    printf("  Thread Stats%6s%11s%8s%12s\n", "Avg", "Stdev", "Max", "+/- Stdev");
+    printf("  线程统计信息%6s%11s%8s%12s\n", "平均值", "标准差", "最大值", "+/- 标准差比例");
 }
 
 static void print_units(long double n, char *(*fmt)(long double), int width) {
@@ -574,7 +574,7 @@ static void print_stats(char *name, stats *stats, char *(*fmt)(long double)) {
 
 static void print_stats_latency(stats *stats) {
     long double percentiles[] = { 50.0, 75.0, 90.0, 99.0 };
-    printf("  Latency Distribution\n");
+    printf("  延迟分布\n");
     for (size_t i = 0; i < sizeof(percentiles) / sizeof(long double); i++) {
         long double p = percentiles[i];
         uint64_t n = stats_percentile(stats, p);
